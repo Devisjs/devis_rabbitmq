@@ -13,7 +13,7 @@
 * Server.js
 ```js
 const devis = require("devis")
-    .use("devis_rabbitmq");
+    .plug("devis_rabbitmq");
 
 const rabbitOptions = {
     host: "localhost",
@@ -34,7 +34,7 @@ devis.listenMQ({ rabbitmq: rabbitOptions }, (err, res) => {
 
 ```js
 const devis = require("devis")
-    .use("devis_rabbitmq");
+    .plug("devis_rabbitmq");
 
 const rabbitOptions = {
     host: "localhost",
