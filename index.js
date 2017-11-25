@@ -31,7 +31,7 @@ function listen(args, callback) {
                         data = JSON.parse(data);
                         delete data.path["queue"];
                         devis.call(data.path, data.args, (err, res) => {
-                            ch.sendToQueue(args.rabbitmq.queue + "Producer", new Buffer(res.toString()));
+                            ch.sendToQueue(args.rabbitmq.queue + "Producer", new Buffer(JSON.stringify(res)));
                         });
                     }, { noAck: true });
                     let transportInfors={host:args.rabbitmq.host,port:args.rabbitmq.port};
