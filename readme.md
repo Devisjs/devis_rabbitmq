@@ -52,7 +52,7 @@ const promise = new Promise((resolve, reject) => {
 });
 
 promise.then((result) => {
-    devis.callMQ({ queue: "1x", method: "calculato1r", action: "add" }, { ar1: 1, ar2: 2 }, (err, res) => {
+    devis.callMQ({ queue: "1x", method: "calculator", action: "add" }, { ar1: 1, ar2: 2 }, (err, res) => {
         console.log(res);
     })
 });
