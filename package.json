@@ -9,6 +9,17 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "keywords": [
+    "devis",
+    "plugin",
+    "amqp",
+    "transport",
+    "rabbitmq",
+    "zmq",
+    "activemq",
+    "microservice",
+    "rpc"
+  ],
   "author": "reida ismail <ismailrei@gmail.com> (https://github.com/ismailrei)",
   "license": "ISC",
   "dependencies": {
