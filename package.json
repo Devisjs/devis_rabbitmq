@@ -1,7 +1,7 @@
 {
   "name": "devis_rabbitmq",
   "version": "1.0.0",
-  "description": "",
+  "description": "Amqp transport plugin for Devis",
   "main": "index.js",
   "directories": {
     "example": "examples"
