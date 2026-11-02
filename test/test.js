@@ -40,3 +40,18 @@ test("concurrent calls each receive their own result", async () => {
     ]);
     assert.deepStrictEqual(results, ["2", "20"]);
 });
+
+// Up to 2.0.0 an unknown pattern or a handler error crashed the server and the caller never got an answer.
+test("an unknown pattern is answered with an error and the server keeps serving", async () => {
+    await assert.rejects(promisify(devis.callMQ, { queue: rabbitOptions.queue, method: "calculator", action: "missing" }, {}), /No handle found/);
+    const res = await promisify(devis.callMQ, { queue: rabbitOptions.queue, method: "calculator", action: "add" }, { ar1: 2, ar2: 2, delay: 0 });
+    assert.strictEqual(res, "4");
+});
+
+test("an error from the remote handler reaches the caller", async () => {
+    devis.push({ method: "calculator", action: "divide" }, (args, done) => {
+        if (args.right === 0) return done("division by zero");
+        done(null, args.left / args.right);
+    });
+    await assert.rejects(promisify(devis.callMQ, { queue: rabbitOptions.queue, method: "calculator", action: "divide" }, { left: 1, right: 0 }), /division by zero/);
+});
