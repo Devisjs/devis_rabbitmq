@@ -1,13 +1,13 @@
 {
   "name": "devis_rabbitmq",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "Amqp transport plugin for Devis",
   "main": "index.js",
   "directories": {
     "example": "examples"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test --test-force-exit --test-timeout=20000"
   },
   "keywords": [
     "devis",
@@ -21,10 +21,17 @@
     "rpc"
   ],
   "author": "reida ismail <ismailrei@gmail.com> (https://github.com/ismailrei)",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
-    "amqplib": "^0.5.2",
-    "colors": "^1.1.2",
-    "devis": "^2.0.1"
+    "amqplib": "^2.2.1"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "peerDependencies": {
+    "devis": "^3.0.0"
+  },
+  "devDependencies": {
+    "devis": "^3.0.0"
   }
 }

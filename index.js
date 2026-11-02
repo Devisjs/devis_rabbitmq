@@ -3,10 +3,13 @@
 "use strict";
 
 const devis = require("devis");
-const colors = require("colors/safe");
+const { styleText } = require("node:util");
+const { randomUUID } = require("node:crypto");
 const amqp = require('amqplib/callback_api');
 let rabbitmqOptions = [];
 let channel = [];
+let replyQueue = [];
+let pending = new Map();
 
 //Producer
 function listen(args, callback) {
@@ -30,12 +33,14 @@ function listen(args, callback) {
                         let data = msg.content.toString();
                         data = JSON.parse(data);
                         delete data.path["queue"];
+                        // 1.x clients send no replyTo and read the shared Producer queue.
+                        let replyTo = msg.properties.replyTo || args.rabbitmq.queue + "Producer";
                         devis.call(data.path, data.args, (err, res) => {
-                            ch.sendToQueue(args.rabbitmq.queue + "Producer", new Buffer(JSON.stringify(res)));
+                            ch.sendToQueue(replyTo, Buffer.from(JSON.stringify(res)), { correlationId: msg.properties.correlationId });
                         });
                     }, { noAck: true });
                     let transportInfors={host:args.rabbitmq.host,port:args.rabbitmq.port};
-                    console.log(colors.green("server launched using the following informations : rabbitMQ ", JSON.stringify(transportInfors)));
+                    console.log(styleText("green", "server launched using the following informations : rabbitMQ " + JSON.stringify(transportInfors)));
                     callback(null, "Hello producer!");
                 }
             });
@@ -60,10 +65,24 @@ function client(args, callback) {
                     callback(err, null);
                 }
                 else {
-                    let transportInfors={host:args.rabbitmq.host,port:args.rabbitmq.port};
-                    console.log(colors.green("connected using the following informations : ", JSON.stringify(transportInfors)));
-                    channel[args.rabbitmq.queue] = ch;
-                    callback(null, channel);
+                    // Each client reads replies from its own queue so concurrent calls get their own answer.
+                    ch.assertQueue("", { exclusive: true }, function (err, q) {
+                        if (err) {
+                            return callback(err, null);
+                        }
+                        ch.consume(q.queue, function (msg) {
+                            let reply = pending.get(msg.properties.correlationId);
+                            if (reply) {
+                                pending.delete(msg.properties.correlationId);
+                                reply(null, msg.content.toString());
+                            }
+                        }, { noAck: true });
+                        let transportInfors={host:args.rabbitmq.host,port:args.rabbitmq.port};
+                        console.log(styleText("green", "connected using the following informations : " + JSON.stringify(transportInfors)));
+                        channel[args.rabbitmq.queue] = ch;
+                        replyQueue[args.rabbitmq.queue] = q.queue;
+                        callback(null, channel);
+                    });
                 }
             });
         }
@@ -76,12 +95,12 @@ function call(path, args, callback) {
         path: path,
         args: args
     }
-    channel[path.queue].sendToQueue(path.queue + "Consumer", new Buffer(JSON.stringify(dataToSend)));
-    channel[path.queue].assertQueue(path.queue);
-
-    channel[path.queue].consume(path.queue + "Producer", function (msg) {
-        callback(null, msg.content.toString());
-    }, { noAck: true });
+    let correlationId = randomUUID();
+    pending.set(correlationId, callback);
+    channel[path.queue].sendToQueue(path.queue + "Consumer", Buffer.from(JSON.stringify(dataToSend)), {
+        replyTo: replyQueue[path.queue],
+        correlationId: correlationId
+    });
     return devis;
 }
 
