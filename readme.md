@@ -67,11 +67,15 @@ promise.then((result) => {
 
 The `callMQ` callback receives the handler's result as a JSON string.
 
+If the handler answers with an error, or no handler matches the pattern, the callback receives it as `err` (for example `"No handle found"`) and the server keeps running.
+
 ## How replies are routed
 
 Requests go to the `<queue>Consumer` queue. Each client declares its own exclusive reply queue and tags every call with a correlation id, so concurrent calls always receive their own result.
+Errors travel in the `error` header of the reply, so older clients still read the body as before.
 
 ## Upgrading from 1.x
 
 * Node.js 22 or later and Devis 3 are required. Devis is now a peer dependency.
 * 1.x clients shared the `<queue>Producer` reply queue, so concurrent calls could receive another call's result or none at all. A 2.x server still answers 1.x clients on that queue, but upgrade clients too.
+* Up to 2.0.0, an unknown pattern or a handler error crashed the server and left the caller without an answer. Since 2.0.1 the caller receives the error.

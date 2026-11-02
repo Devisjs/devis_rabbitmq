@@ -35,9 +35,19 @@ function listen(args, callback) {
                         delete data.path["queue"];
                         // 1.x clients send no replyTo and read the shared Producer queue.
                         let replyTo = msg.properties.replyTo || args.rabbitmq.queue + "Producer";
-                        devis.call(data.path, data.args, (err, res) => {
-                            ch.sendToQueue(replyTo, Buffer.from(JSON.stringify(res)), { correlationId: msg.properties.correlationId });
-                        });
+                        let reply = (err, res) => {
+                            // The error travels in a header so the body stays readable by older clients.
+                            let headers = err ? { error: typeof err === "string" ? err : err.message || JSON.stringify(err) } : {};
+                            ch.sendToQueue(replyTo, Buffer.from(JSON.stringify(res === undefined ? null : res)), {
+                                correlationId: msg.properties.correlationId,
+                                headers: headers
+                            });
+                        };
+                        try {
+                            devis.call(data.path, data.args, reply);
+                        } catch (e) {
+                            reply(e.message);
+                        }
                     }, { noAck: true });
                     let transportInfors={host:args.rabbitmq.host,port:args.rabbitmq.port};
                     console.log(styleText("green", "server launched using the following informations : rabbitMQ " + JSON.stringify(transportInfors)));
@@ -74,7 +84,9 @@ function client(args, callback) {
                             let reply = pending.get(msg.properties.correlationId);
                             if (reply) {
                                 pending.delete(msg.properties.correlationId);
-                                reply(null, msg.content.toString());
+                                let error = msg.properties.headers && msg.properties.headers.error;
+                                if (error) reply(error, null);
+                                else reply(null, msg.content.toString());
                             }
                         }, { noAck: true });
                         let transportInfors={host:args.rabbitmq.host,port:args.rabbitmq.port};
