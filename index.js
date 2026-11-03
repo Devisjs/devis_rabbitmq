@@ -103,6 +103,12 @@ function client(args, callback) {
 }
 
 function call(path, args, callback) {
+    if (!callback) {
+        // Unlike the callback, the Promise resolves the parsed result.
+        return new Promise((resolve, reject) => {
+            call(path, args, (err, res) => (err ? reject(new Error(err)) : resolve(JSON.parse(res))));
+        });
+    }
     let dataToSend = {
         path: path,
         args: args
