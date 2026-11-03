@@ -76,6 +76,6 @@ Errors travel in the `error` header of the reply, so older clients still read th
 
 ## Upgrading from 1.x
 
-* Node.js 22 or later and Devis 3 are required. Devis is now a peer dependency.
+* Node.js 22 or later and Devis 3 or 4 are required. Devis is now a peer dependency.
 * 1.x clients shared the `<queue>Producer` reply queue, so concurrent calls could receive another call's result or none at all. A 2.x server still answers 1.x clients on that queue, but upgrade clients too.
 * Up to 2.0.0, an unknown pattern or a handler error crashed the server and left the caller without an answer. Since 2.0.1 the caller receives the error.

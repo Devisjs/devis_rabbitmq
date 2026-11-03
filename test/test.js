@@ -55,3 +55,15 @@ test("an error from the remote handler reaches the caller", async () => {
     });
     await assert.rejects(promisify(devis.callMQ, { queue: rabbitOptions.queue, method: "calculator", action: "divide" }, { left: 1, right: 0 }), /division by zero/);
 });
+
+// Callers on Devis 4 await calls instead of wrapping each one in a Promise.
+test("a call without callback resolves the parsed result", async () => {
+    const res = await devis.callMQ({ queue: rabbitOptions.queue, method: "calculator", action: "add" }, { ar1: 1, ar2: 2, delay: 0 });
+    assert.strictEqual(res, 3);
+});
+
+test("a call without callback rejects with an Error carrying the remote error", async () => {
+    const err = await devis.callMQ({ queue: rabbitOptions.queue, method: "calculator", action: "divide" }, { left: 1, right: 0 }).catch((e) => e);
+    assert.ok(err instanceof Error);
+    assert.strictEqual(err.message, "division by zero");
+});

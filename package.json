@@ -1,6 +1,6 @@
 {
   "name": "devis_rabbitmq",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Amqp transport plugin for Devis",
   "main": "index.js",
   "directories": {
@@ -29,9 +29,9 @@
     "node": ">=22"
   },
   "peerDependencies": {
-    "devis": "^3.0.0"
+    "devis": "^3.0.0 || ^4.0.0"
   },
   "devDependencies": {
-    "devis": "^3.0.0"
+    "devis": "^4.0.0"
   }
 }
