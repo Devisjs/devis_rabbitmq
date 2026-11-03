@@ -49,23 +49,14 @@ const rabbitOptions = {
     queue: "1x"
 }
 
-const promise = new Promise((resolve, reject) => {
-    devis.clientMQ({ rabbitmq: rabbitOptions }, (err, res) => {
-        if (err) reject(err);
-        else {
-            resolve(res);
-        }
-    });
-});
-
-promise.then((result) => {
-    devis.callMQ({ queue: "1x", method: "calculator", action: "add" }, { ar1: 1, ar2: 2 }, (err, res) => {
-        console.log(res);
-    })
+devis.clientMQ({ rabbitmq: rabbitOptions }, async (err) => {
+    if (err) return console.log(err);
+    const sum = await devis.callMQ({ queue: "1x", method: "calculator", action: "add" }, { ar1: 1, ar2: 2 });
+    console.log(sum); // 3
 });
 ```
 
-The `callMQ` callback receives the handler's result as a JSON string.
+Without a callback, `callMQ` returns a Promise that resolves the handler's result and rejects with an `Error`. With a callback, it receives the result as a JSON string, as in 2.0.
 
 If the handler answers with an error, or no handler matches the pattern, the callback receives it as `err` (for example `"No handle found"`) and the server keeps running.
 
@@ -76,6 +67,6 @@ Errors travel in the `error` header of the reply, so older clients still read th
 
 ## Upgrading from 1.x
 
-* Node.js 22 or later and Devis 3 are required. Devis is now a peer dependency.
+* Node.js 22 or later and Devis 3 or 4 are required. Devis is now a peer dependency.
 * 1.x clients shared the `<queue>Producer` reply queue, so concurrent calls could receive another call's result or none at all. A 2.x server still answers 1.x clients on that queue, but upgrade clients too.
 * Up to 2.0.0, an unknown pattern or a handler error crashed the server and left the caller without an answer. Since 2.0.1 the caller receives the error.
